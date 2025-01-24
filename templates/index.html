@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOU Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h2 class="text-center">MOU Generator</h2>
+        <form id="mouForm" method="POST" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="name" class="form-label">Name:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <div class="invalid-feedback">Name is required.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div class="invalid-feedback">Please enter a valid email.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="address" class="form-label">Address:</label>
+                <input type="text" class="form-control" id="address" name="address" required>
+                <div class="invalid-feedback">Address is required.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="storename" class="form-label">Store Name:</label>
+                <input type="text" class="form-control" id="storename" name="storename" required>
+                <div class="invalid-feedback">Store name is required.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="pswrd" class="form-label">Password:</label>
+                <input type="text" class="form-control" id="pswrd" name="pswrd" required>
+                <div class="invalid-feedback">Password is required.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="service" class="form-label">Service:</label>
+                <select class="form-select" id="service" name="service" required>
+                    <option value="" disabled selected>Select a service</option>
+                    <option value="Management of Seller Amazon Account">Management of Seller Amazon Account</option>
+                    <option value="DIGITAL MARKETING">DIGITAL MARKETING</option>
+                    <option value="WEBSITE DEVELOPMENT">WEBSITE DEVELOPMENT</option>
+                    <option value="FBA SHIPMENT CREATION">FBA SHIPMENT CREATION</option>
+                    <option value="Brand Store">Brand Store</option>
+                    <option value="A+ Listing">A+ Listing</option>
+                    <option value="BRAND REGISTRY">BRAND REGISTRY</option>
+                    <option value="GTIN">GTIN</option>
+                    <option value="Suspended Account Reinstatement">Suspended Account Reinstatement</option>
+                    <option value="Brand Store & A+ Listing">Brand Store & A+ Listing</option>
+                    <option value="A+ LISTING">A+ LISTING</option>
+                    <option value="CATALOGING">CATALOGING</option>
+                </select>
+                <div class="invalid-feedback">Please select a service.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="cost" class="form-label">Cost:</label>
+                <input type="number" class="form-control" id="cost" name="cost" required>
+                <div class="invalid-feedback">Cost is required.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="duration" class="form-label">Duration:</label>
+                <select class="form-select" id="duration" name="duration" required>
+                    <option value="" disabled selected>Select a duration</option>
+                    <option value="MONTH">MONTH</option>
+                    <option value="2 MONTH">2 MONTH</option>
+                    <option value="3 MONTH">3 MONTH</option>
+                    <option value="4 MONTH">4 MONTH</option>
+                    <option value="5 MONTH">5 MONTH</option>
+                    <option value="6 MONTH">6 MONTH</option>
+                </select>
+                <div class="invalid-feedback">Please select a duration.</div>
+            </div>
+            
+            <button type="submit" name="download_word" class="btn btn-primary w-100">Download MOU</button>
+
+        </form>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">MOU generated successfully!</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+            <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">An error occurred. Please try again.</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById("mouForm").addEventListener("submit", function (event) {
+            const form = event.target;
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.classList.add("was-validated");
+                return;
+            }
+
+            const service = document.getElementById("service").value;
+            const pswrd = document.getElementById("pswrd").value.toLowerCase();
+
+            // Password validation for specific service
+            if (service === "Management of Seller Amazon Account" && (pswrd === "no" || pswrd === "none")) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.getElementById("pswrd").setCustomValidity("Password cannot be 'no' or 'none' for this service.");
+                form.classList.add("was-validated");
+                return;
+            } else {
+                document.getElementById("pswrd").setCustomValidity("");
+            }
+
+            // Show success toast
+            const successToast = new bootstrap.Toast(document.getElementById("successToast"));
+            successToast.show();
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
