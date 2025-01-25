@@ -4,19 +4,29 @@ from docx import Document
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json
+import base64
 
 app = Flask(__name__)
 
-# Initialize Firebase Admin SDK
-firebase_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-if firebase_creds:
-    # Parse JSON string from environment variable
-    creds_dict = json.loads(firebase_creds)
-    cred = credentials.Certificate(creds_dict)
-    firebase_admin.initialize_app(cred)
-else:
-    raise RuntimeError("Firebase credentials not found in environment variables.")
+# Function to decode the Base64 encoded Firebase credentials
+def decode_firebase_credentials():
+    encoded_credentials = os.getenv("FIREBASE_CREDENTIALS_BASE64")  # Get the Base64 encoded credentials from environment variable
+    
+    if encoded_credentials:
+        # Decode the Base64 string
+        credentials_path = "/tmp/credentials.json"  # Temporary location to store the decoded file
+        with open(credentials_path, "wb") as f:
+            f.write(base64.b64decode(encoded_credentials))  # Decode and write to file
+        
+        # Initialize Firebase Admin SDK with the decoded credentials file
+        cred = credentials.Certificate(credentials_path)
+        firebase_admin.initialize_app(cred)
+        print("Firebase initialized successfully.")
+    else:
+        raise RuntimeError("Firebase credentials not found in environment variables.")
+
+# Initialize Firebase Admin SDK by decoding the credentials at runtime
+decode_firebase_credentials()
 
 # Firestore database reference
 db = firestore.client()
@@ -26,7 +36,7 @@ def insert_submission(data):
     mou_ref = db.collection('mou')
     
     # Add a new document with form data
-    mou_ref.add({
+    doc_ref = mou_ref.add({
         'name': data["name"],
         'email': data["email"],
         'address': data["address"],
@@ -37,7 +47,18 @@ def insert_submission(data):
         'duration': data["duration"],
         'timestamp': firestore.SERVER_TIMESTAMP  # Add server-side timestamp
     })
+    
+    # Debugging: Print the type of doc_ref to see what it is
+    print(f"Type of doc_ref: {type(doc_ref)}")  # This should be a DocumentReference object
+    
+    # Attempt to print the ID (this should now work if doc_ref is a DocumentReference object)
+    try:
+        print(f"Document added with ID: {doc_ref.id}")
+    except AttributeError as e:
+        print(f"Error: {e}")
 
+
+# Function to replace placeholders in the Word template
 def replace_text_in_run(run, key, value):
     if key in run.text:
         run.text = run.text.replace(key, value)
@@ -103,10 +124,7 @@ def index():
         }
 
         # Insert form data into Firebase Firestore
-        try:
-            insert_submission(data)
-        except Exception as e:
-            print(f"Error inserting data into Firestore: {e}")
+        insert_submission(data)
 
         # Output folder
         output_folder = "output"
@@ -116,14 +134,21 @@ def index():
         word_path = generate_word(template_path, placeholders, output_folder)
         print(f"Word file path: {word_path}")
 
-        # Serve the generated Word file for download
+
+        # Check if the user clicked the "Download Word" button
         if "download_word" in request.form:
             try:
-                print("Serving Word file for download.")
+                print("Word file path: clicked")
+                # Serve the generated Word file for download
                 return send_file(word_path, as_attachment=True)
+                 
+
             except Exception as e:
                 print(f"Error sending file: {e}")
                 return "An error occurred while downloading the file.", 500
+            
+        if not os.path.exists(word_path):
+            print("File does not exist!")
 
     return render_template("index.html")
 
