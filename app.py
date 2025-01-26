@@ -1,35 +1,27 @@
 from flask import Flask, request, render_template, send_file
 import os
+import json
+import base64
 from docx import Document
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
-import base64
 
 app = Flask(__name__)
 
-# Function to decode the Base64 encoded Firebase credentials
-def decode_firebase_credentials():
-    encoded_credentials = os.getenv("FIREBASE_CREDENTIALS_BASE64")  # Get the Base64 encoded credentials from environment variable
-    
-    if encoded_credentials:
-        # Decode the Base64 string
-        credentials_path = "/tmp/credentials.json"  # Temporary location to store the decoded file
-        with open(credentials_path, "wb") as f:
-            f.write(base64.b64decode(encoded_credentials))  # Decode and write to file
-        
-        # Initialize Firebase Admin SDK with the decoded credentials file
-        cred = credentials.Certificate(credentials_path)
-        firebase_admin.initialize_app(cred)
-        print("Firebase initialized successfully.")
-    else:
-        raise RuntimeError("Firebase credentials not found in environment variables.")
+# Step 1: Load Firebase Credentials from Environment Variables
+firebase_key_base64 = os.getenv("FIREBASE_KEY")  # Load from environment
+if not firebase_key_base64:
+    raise ValueError("FIREBASE_KEY environment variable is not set")
 
-# Initialize Firebase Admin SDK by decoding the credentials at runtime
-decode_firebase_credentials()
+# Step 2: Decode the Base64 string and initialize Firebase
+firebase_key = json.loads(base64.b64decode(firebase_key_base64).decode("utf-8"))
+cred = credentials.Certificate(firebase_key)
+firebase_admin.initialize_app(cred)
 
-# Firestore database reference
+# Step 3: Initialize Firestore
 db = firestore.client()
+
 
 def insert_submission(data):
     # Create a reference to the 'mou' collection
@@ -141,7 +133,7 @@ def index():
                 print("Word file path: clicked")
                 # Serve the generated Word file for download
                 return send_file(word_path, as_attachment=True)
-                 
+                
 
             except Exception as e:
                 print(f"Error sending file: {e}")
@@ -151,6 +143,7 @@ def index():
             print("File does not exist!")
 
     return render_template("index.html")
+
 
 
 if __name__ == "__main__":
